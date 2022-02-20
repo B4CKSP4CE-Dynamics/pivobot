@@ -13,6 +13,37 @@
 
 <body>
     <script type="text/javascript">
+        function app(pixi) {
+            let scene = new PIXI.Container();
+            pixi.stage = scene;
+            scene.interactive = true;
+            scene.cursor = 'pointer';
+
+            setup(pixi, scene);
+
+            window.addEventListener(
+                "keydown",
+                (event) => {
+                    key_handler(event.keyCode, true);
+                    if( event.keyCode == 38 || event.keyCode == 40 || event.keyCode == 13 /*event.keyCode !== 116 && event.keyCode !== 122 && event.keyCode !== 123*/) {
+                        event.preventDefault();
+                    }
+                },
+                false
+            );
+
+            window.addEventListener(
+                "keyup",
+                (event) => {
+                    key_handler(event.keyCode, false);
+                    event.preventDefault();
+                },
+                false
+            );
+
+            pixi.ticker.add(delta => update(delta, performance.now()));
+        }
+
         let pixi = new PIXI.Application({
             width: window.innerWidth * 0.99,
             height: window.innerHeight * 0.99,
