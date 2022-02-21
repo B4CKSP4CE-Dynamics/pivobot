@@ -1,9 +1,14 @@
-function key_handler(keyCode, isPressed) {
-
+function key_handler(key, isPressed) {
+    console.log(key);
 }
 
+let state = 0;
 function update(world, dt, t) {
-
+    if(t > 2 && state === 0) {
+        console.log("1");
+        world.joint_ab.SetMotorSpeed(-2);
+        state = 1;
+    }
 }
 
 function setup() {
@@ -22,9 +27,10 @@ function setup() {
     joint_def.bodyB = b;
     joint_def.localAnchorA = new b2Vec2(0, 0);
     joint_def.localAnchorB = new b2Vec2(-1, 0);
-    world.CreateJoint(joint_def);
-
-    world.joint_def = joint_def;
+    world.joint_ab = world.CreateJoint(joint_def);
+    world.joint_ab.EnableMotor(true);
+    world.joint_ab.SetMotorSpeed(1);
+    world.joint_ab.SetMaxMotorTorque(100);
 
     return world;
 }
