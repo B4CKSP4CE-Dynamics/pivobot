@@ -32,18 +32,23 @@
             ctx.font = 'bold 14px arial';
         }
 
+        let last_time = performance.now() / 1000;
         function step(world, ctx) {
+            let now = performance.now() / 1000;
+
             let fps = 30;
             let timeStep = 1.0/(fps * 0.8);
 
-            update(timeStep, performance.now())
+            update(world, now - last_time, now);
     
             //move the box2d world ahead
-            world.Step(timeStep, 8, 3);
+            world.Step(now - last_time, 8, 3);
             world.ClearForces();
             
             //redraw the world
             draw_world(world, ctx);
+
+            last_time = now;
             
             //call this function again after 1/60 seconds or 16.7ms
             setTimeout(() => step(world, ctx), 1000 / fps);
