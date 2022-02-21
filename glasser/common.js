@@ -1,111 +1,48 @@
-const colors = {
-    background_gray: 0x666650,
-    light_yellow: 0xF5F592,
-    gray: 0x393938,
-    dark_gray: 0x292905,
-    black: 0x000000,
-    white: 0xFFFFFF,
-};
+const b2Vec2 = Box2D.Common.Math.b2Vec2;
+const b2AABB = Box2D.Collision.b2AABB;
+const b2BodyDef = Box2D.Dynamics.b2BodyDef;
+const b2Body = Box2D.Dynamics.b2Body;
+const b2FixtureDef = Box2D.Dynamics.b2FixtureDef;
+const b2Fixture = Box2D.Dynamics.b2Fixture;
+const b2World = Box2D.Dynamics.b2World;
+const b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape;
+const b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
+const b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
+const b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
+const b2RevoluteJointDef =  Box2D.Dynamics.Joints.b2RevoluteJointDef;
+const b2Shape = Box2D.Collision.Shapes.b2Shape;
 
-const RED_STYLE_H1 = new PIXI.TextStyle({
-  fontFamily: "Arial",
-  fontSize: 56,
-  fill: "#ff3b94",
-  stroke: '#55ffe1',
-  strokeThickness: 1,
-  dropShadow: true,
-  dropShadowColor: "#af3dff",
-  dropShadowBlur: 15,
-  dropShadowAngle: Math.PI / 7,
-  dropShadowDistance: 3,
-});
-
-const DIALOG_STYLE_ANSWER = new PIXI.TextStyle({
-    fontFamily: "Arial",
-    fontSize: 50,
-    fill: PIXI.utils.hex2string(colors.white),
-    strokeThickness: 1
-});
-
-let DIALOG_STYLE_MAIN = new PIXI.TextStyle({
-    fontFamily: "Arial",
-    fontSize: 30,
-    fill: PIXI.utils.hex2string(colors.white),
-    strokeThickness: 1,
-    wordWrap: true,
-    wordWrapWidth: 1000,
-});
-
-let DIALOG_STYLE_H1 = new PIXI.TextStyle({
-    fontFamily: "Arial",
-    fontSize: 50,
-    fill: "#4E4A36",
-    stroke: PIXI.utils.hex2string(colors.gray),
-    strokeThickness: 1,
-    dropShadow: true,
-    dropShadowColor: PIXI.utils.hex2string(colors.light_yellow),
-    dropShadowBlur: 15,
-    dropShadowAngle: Math.PI / 7,
-    dropShadowDistance: 3,
-});
-
-const my_fragment = `
-varying vec2 vTextureCoord;
-uniform sampler2D uSampler;
-uniform float time;
-
-void main(void)
-{
-   gl_FragColor = vTextureCoord.x > 0.
-       ? texture2D(uSampler, vTextureCoord)
-       : vec4(1., 0., 0., 1.);
-}
-`;
-
-function shuffle(array) {
-  let currentIndex = array.length,  randomIndex;
-
-  // While there remain elements to shuffle...
-  while (currentIndex != 0) {
-
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
-  }
-
-  return array;
-}
-
-function set_anchor(self, value) {
-    self.pivot.x = value * self.width / self.scale.x;
-    self.pivot.y = value * self.height / self.scale.y;
-}
-
-function add_answer(self, label) {
-    //  добавляем вариант ответа
-    let text = new PIXI.Text(label, DIALOG_STYLE_ANSWER.clone());
-    text.anchor.set(0.5);
-
-    self.text_bounds = text.getBounds();
-
-    const PADDING = 2;
-
-    // рамка для текста ответа
-    let cursor = new PIXI.Graphics()
-        .beginFill(colors.white)
-        .drawRect(
-            -PADDING, -PADDING,
-            self.text_bounds.width + PADDING * 2, self.text_bounds.height + PADDING * 2
-        )
-        .endFill();
-    set_anchor(cursor, 0.5);
-    self.addChild(cursor);
-    self.cursor = cursor;
-
-    self.addChild(text);
-    self.text = text;
+//Create standard boxes of given height , width at x,y
+function createBox(world, x, y, width, height, options) {
+     //default setting
+    options = {
+        'density' : 1.0 ,
+        'friction' : 1.0 ,
+        'restitution' : 0.5 ,
+        'type' : b2Body.b2_dynamicBody,
+        ...options
+    };
+      
+    let body_def = new b2BodyDef();
+    let fix_def = new b2FixtureDef();
+    
+    fix_def.density = options.density;
+    fix_def.friction = options.friction;
+    fix_def.restitution = options.restitution;
+    
+    fix_def.shape = new b2PolygonShape();
+        
+    fix_def.shape.SetAsBox( width/2 , height/2 );
+    
+    body_def.position.Set(x , y);
+    body_def.linearDamping = 0.5;
+    body_def.angularDamping = 0.5;
+    
+    body_def.type = options.type;
+    body_def.userData = options.user_data;
+    
+    let b = world.CreateBody( body_def );
+    let f = b.CreateFixture(fix_def);
+    
+    return b;
 }

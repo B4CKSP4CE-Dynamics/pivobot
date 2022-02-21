@@ -4,58 +4,90 @@
   <meta charset="utf-8">
   <title>Pivo bot glass mech</title>
   <link rel="stylesheet" href="style.css">
-  <script src="pixi.min.js"></script>
+
   <script src="box2d.min.js"></script>
-  <script src="pixi-box2d.min.js"></script>
   <script src="common.js"></script>
   <script src="app.js"></script>
 </head>
 
 <body>
     <script type="text/javascript">
-        function app(pixi) {
-            let scene = new PIXI.Container();
-            pixi.stage = scene;
-            scene.interactive = true;
-            scene.cursor = 'pointer';
+        let canvas = document.createElement('canvas');
+        canvas.width =  window.innerWidth * 0.99;
+        canvas.height = window.innerHeight * 0.99;
 
-            setup(pixi, scene);
-
-            window.addEventListener(
-                "keydown",
-                (event) => {
-                    key_handler(event.keyCode, true);
-                    if( event.keyCode == 38 || event.keyCode == 40 || event.keyCode == 13 /*event.keyCode !== 116 && event.keyCode !== 122 && event.keyCode !== 123*/) {
-                        event.preventDefault();
-                    }
-                },
-                false
-            );
-
-            window.addEventListener(
-                "keyup",
-                (event) => {
-                    key_handler(event.keyCode, false);
-                    event.preventDefault();
-                },
-                false
-            );
-
-            pixi.ticker.add(delta => update(delta, performance.now()));
+        function draw_world(world, ctx) {
+            //convert the canvas coordinate directions to cartesian coordinate direction by translating and scaling
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(canvas.width/2, canvas.height/2);
+            ctx.scale(1 , -1);
+            world.DrawDebugData();
+            ctx.restore();
+            
+            ctx.font = 'bold 18px arial';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#fff';
+            ctx.fillText('Peevo glasser emulator', canvas.width/2, 20);
+            ctx.font = 'bold 14px arial';
         }
 
-        let pixi = new PIXI.Application({
-            width: window.innerWidth * 0.99,
-            height: window.innerHeight * 0.99,
-            backgroundColor: 0x000000,
-            antialias: true,    // default: false
-            transparent: true, // default: false
-            resolution: 1       // default: 1
-        });
+        function step(world, ctx) {
+            let fps = 30;
+            let timeStep = 1.0/(fps * 0.8);
 
-        document.body.appendChild(pixi.view);
+            update(timeStep, performance.now())
+    
+            //move the box2d world ahead
+            world.Step(timeStep, 8, 3);
+            world.ClearForces();
+            
+            //redraw the world
+            draw_world(world, ctx);
+            
+            //call this function again after 1/60 seconds or 16.7ms
+            setTimeout(() => step(world, ctx), 1000 / fps);
+        }
 
-        app(pixi);
+        
+        let ctx = canvas.getContext('2d');
+
+        document.body.appendChild(canvas);
+
+        window.addEventListener(
+            "keydown",
+            (event) => {
+                key_handler(event.keyCode, true);
+                if( event.keyCode == 38 || event.keyCode == 40 || event.keyCode == 13 /*event.keyCode !== 116 && event.keyCode !== 122 && event.keyCode !== 123*/) {
+                    event.preventDefault();
+                }
+            },
+            false
+        );
+
+        window.addEventListener(
+            "keyup",
+            (event) => {
+                key_handler(event.keyCode, false);
+                event.preventDefault();
+            },
+            false
+        );  
+
+        //box2d to canvas scale , therefor 1 metre of box2d = 30px of canvas :)
+        const scale = 30;
+
+        let world = setup();
+
+        let debugDraw = new b2DebugDraw();
+        debugDraw.SetSprite(ctx);
+        debugDraw.SetDrawScale(scale);
+        debugDraw.SetFillAlpha(0.5);
+        debugDraw.SetLineThickness(1.0);
+        debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+        world.SetDebugDraw(debugDraw);
+
+        step(world, ctx);
     </script>
 </body>
 </html>
