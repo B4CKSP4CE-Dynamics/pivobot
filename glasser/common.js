@@ -43,6 +43,10 @@ function createBox(world, x, y, width, height, options) {
     
     let b = world.CreateBody( body_def );
     let f = b.CreateFixture(fix_def);
+    f.SetSensor(true);
     
     return b;
 }
+
+function cm(v) { return v * 0.01; }
+function mm(v) { return v * 0.001; }
