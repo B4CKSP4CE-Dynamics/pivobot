@@ -1,3 +1,5 @@
+const SPEED = 0.2;
+
 function key_handler(key, isPressed) {
     // console.log(key);
 
@@ -11,13 +13,13 @@ function key_handler(key, isPressed) {
         }
     } else {
         if(key === "q") {
-            world.main_servo.SetMotorSpeed(1);
+            world.main_servo.SetMotorSpeed(SPEED);
         } else if(key === "w") {
-            world.main_servo.SetMotorSpeed(-1);
+            world.main_servo.SetMotorSpeed(-SPEED);
         } else if(key === "o") {
-            world.aux_servo.SetMotorSpeed(1);
+            world.aux_servo.SetMotorSpeed(SPEED);
         } else if(key === "p") {
-            world.aux_servo.SetMotorSpeed(-1);
+            world.aux_servo.SetMotorSpeed(-SPEED);
         }
     }
 
@@ -42,6 +44,8 @@ function update(world, dt, t) {
     }
 }
 
+const Y_OFFSET = -cm(10);
+
 const PRIMARY_LEVER = cm(10);
 const THICKNESS = cm(0.5);
 const SERVO_SIZE = cm(2);
@@ -60,14 +64,23 @@ const SECONDARY_TOP_INTERVAL = cm(5);
 
 const PLATFORM = cm(10);
 const PLATFORM_X = 0.0625;
-const PLATFORM_Y = 0.075;
+const PLATFORM_Y = 0.075 + Y_OFFSET;
 const PLATFORM_A = -11;
 
+const TAP_POS = [cm(5), cm(8)];
+const TAP = [cm(1), cm(3)];
+
+const GLASS = [cm(3), cm(6)];
+
 function setup() {
-    let gravity = new b2Vec2(0, -0);
+    let gravity = new b2Vec2(0, -1);
     let world = new b2World(gravity, true);
 
-    let platform = createBox(world, PLATFORM_X, PLATFORM_Y, THICKNESS, PLATFORM, {type : b2Body.b2_staticBody});
+    let tap = createBox(world, TAP_POS[0], TAP_POS[1], TAP[0], TAP[1], {type : b2Body.b2_staticBody});
+
+    let glass = createBox(world, PLATFORM_X, PLATFORM_Y + GLASS[1], GLASS[0], GLASS[1], {collision: true});
+
+    let platform = createBox(world, PLATFORM_X, PLATFORM_Y, THICKNESS, PLATFORM, {type : b2Body.b2_staticBody, collision: true});
     platform.SetAngle(PLATFORM_A);
 
     let primary_lever = createBox(world, 0, 0, THICKNESS, PRIMARY_LEVER);
@@ -77,7 +90,7 @@ function setup() {
     {
         let joint_def = new b2RevoluteJointDef();
 
-        let servo = createBox(world, 0, 0, SERVO_SIZE, SERVO_SIZE, {type : b2Body.b2_staticBody});
+        let servo = createBox(world, 0, Y_OFFSET, SERVO_SIZE, SERVO_SIZE, {type : b2Body.b2_staticBody});
         joint_def.bodyA = servo;
         joint_def.localAnchorA = new b2Vec2(0, 0);
 
@@ -96,7 +109,7 @@ function setup() {
     {
         let joint_def = new b2RevoluteJointDef();
 
-        let servo = createBox(world, 0, -SERVO_DISTANCE, SERVO_SIZE, SERVO_SIZE, {type : b2Body.b2_staticBody});
+        let servo = createBox(world, 0, -SERVO_DISTANCE + Y_OFFSET, SERVO_SIZE, SERVO_SIZE, {type : b2Body.b2_staticBody});
         joint_def.bodyA = servo;
         joint_def.localAnchorA = new b2Vec2(0, 0);
         

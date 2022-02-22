@@ -42,7 +42,7 @@
             update(world, now - last_time, now);
     
             //move the box2d world ahead
-            world.Step(now - last_time, 8, 3);
+            world.Step(now - last_time, 50, 0.1);
             world.ClearForces();
             
             //redraw the world

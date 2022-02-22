@@ -20,6 +20,7 @@ function createBox(world, x, y, width, height, options) {
         'friction' : 5.0 ,
         'restitution' : 0.5 ,
         'type' : b2Body.b2_dynamicBody,
+        'collision' : false,
         ...options
     };
       
@@ -43,7 +44,7 @@ function createBox(world, x, y, width, height, options) {
     
     let b = world.CreateBody( body_def );
     let f = b.CreateFixture(fix_def);
-    f.SetSensor(true);
+    f.SetSensor(!options.collision);
     
     return b;
 }
