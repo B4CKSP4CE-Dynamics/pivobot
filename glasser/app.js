@@ -1,10 +1,39 @@
 function key_handler(key, isPressed) {
-    console.log(key);
+    // console.log(key);
+
+    if(!isPressed) {
+        if(key === "q" || key === "w") {
+            // stop main servo
+            world.main_servo.SetMotorSpeed(0);
+        } else if(key === "o" || key === "p") {
+            // stop aux servo
+            world.aux_servo.SetMotorSpeed(0);
+        }
+    } else {
+        if(key === "q") {
+            world.main_servo.SetMotorSpeed(1);
+        } else if(key === "w") {
+            world.main_servo.SetMotorSpeed(-1);
+        } else if(key === "o") {
+            world.aux_servo.SetMotorSpeed(1);
+        } else if(key === "p") {
+            world.aux_servo.SetMotorSpeed(-1);
+        }
+    }
+
+    if(key === " ") {
+        console.log(world.platform.GetPosition(), world.platform.GetAngle());
+    }
 }
 
 let state = 0;
 function update(world, dt, t) {
-    if(t > 0 && state === 0) {
+    if(t > 1 && state === 0) {
+        world.platform.SetType(b2Body.b2_dynamicBody);
+
+        world.main_servo.EnableMotor(true);
+        world.aux_servo.EnableMotor(true);
+
         // console.log("1");
         // world.joint_ab.SetMotorSpeed(-2);
         // world.aux_servo_joint.EnableMotor(false);
@@ -18,24 +47,31 @@ const THICKNESS = cm(0.5);
 const SERVO_SIZE = cm(2);
 
 const AUX_SERVO_LEVER = cm(3);
-const SERVO_DISTANCE = cm(5);
+const SERVO_DISTANCE = cm(-5);
 
-const AUX_ROD = cm(14);
+const AUX_ROD = cm(10);
+const AUX_ROD_MOUNT = cm(2);
 
-const SECONDARY_LEVER = cm(10);
-const SECONDARY_LEVER_OFFSET = cm(0);
+const SECONDARY_LEVER = cm(13);
 
-const SECONDARY_ROD = cm(5);
-const SECONDARY_BOTTOM_INTERVAL = cm(5.5);
+const SECONDARY_ROD = cm(11);
+const SECONDARY_BOTTOM_INTERVAL = cm(6);
 const SECONDARY_TOP_INTERVAL = cm(5);
 
 const PLATFORM = cm(10);
+const PLATFORM_X = 0.0625;
+const PLATFORM_Y = 0.075;
+const PLATFORM_A = -11;
 
 function setup() {
     let gravity = new b2Vec2(0, -0);
     let world = new b2World(gravity, true);
 
+    let platform = createBox(world, PLATFORM_X, PLATFORM_Y, THICKNESS, PLATFORM, {type : b2Body.b2_staticBody});
+    platform.SetAngle(PLATFORM_A);
+
     let primary_lever = createBox(world, 0, 0, THICKNESS, PRIMARY_LEVER);
+    primary_lever.SetAngle(-Math.PI/2);
 
     // main servo
     {
@@ -48,10 +84,10 @@ function setup() {
         joint_def.bodyB = primary_lever;
         joint_def.localAnchorB = new b2Vec2(0, -PRIMARY_LEVER/2 + THICKNESS/2);
 
-        world.main_servo_joint = world.CreateJoint(joint_def);
-        /*world.main_servo_joint.EnableMotor(true);
-        world.main_servo_joint.SetMotorSpeed(0);
-        world.main_servo_joint.SetMaxMotorTorque(1);*/
+        world.main_servo = world.CreateJoint(joint_def);
+
+        world.main_servo.SetMotorSpeed(0);
+        world.main_servo.SetMaxMotorTorque(1000);
     }
 
     let aux_servo_lever = createBox(world, 0, 0, THICKNESS, AUX_SERVO_LEVER);
@@ -67,10 +103,10 @@ function setup() {
         joint_def.bodyB = aux_servo_lever;
         joint_def.localAnchorB = new b2Vec2(0, -AUX_SERVO_LEVER/2 + THICKNESS/2);
 
-        world.aux_servo_joint = world.CreateJoint(joint_def);
-        world.aux_servo_joint.EnableMotor(false);
-        world.aux_servo_joint.SetMotorSpeed(1);
-        world.aux_servo_joint.SetMaxMotorTorque(1);
+        world.aux_servo = world.CreateJoint(joint_def);
+        
+        world.aux_servo.SetMotorSpeed(0);
+        world.aux_servo.SetMaxMotorTorque(1000);
     }
 
     // aux rod
@@ -93,7 +129,7 @@ function setup() {
         let joint_def = new b2RevoluteJointDef();
 
         joint_def.bodyA = secondary_lever;
-        joint_def.localAnchorA = new b2Vec2(0, -SECONDARY_LEVER/2 + THICKNESS/2);
+        joint_def.localAnchorA = new b2Vec2(0, AUX_ROD_MOUNT);
         
         joint_def.bodyB = aux_rod;
         joint_def.localAnchorB = new b2Vec2(0, +AUX_ROD/2 - THICKNESS/2);
@@ -104,7 +140,7 @@ function setup() {
         let joint_def = new b2RevoluteJointDef();
 
         joint_def.bodyA = secondary_lever;
-        joint_def.localAnchorA = new b2Vec2(0, SECONDARY_LEVER_OFFSET);
+        joint_def.localAnchorA = new b2Vec2(0, -SECONDARY_LEVER/2 + THICKNESS/2);
         
         joint_def.bodyB = primary_lever;
         joint_def.localAnchorB = new b2Vec2(0, PRIMARY_LEVER/2 - THICKNESS/2);
@@ -112,12 +148,11 @@ function setup() {
         world.CreateJoint(joint_def);
     }
 
-    let platform = createBox(world, 0, 0, THICKNESS, PLATFORM);
     {
         let joint_def = new b2RevoluteJointDef();
 
         joint_def.bodyA = platform;
-        joint_def.localAnchorA = new b2Vec2(0, SECONDARY_TOP_INTERVAL/2);
+        joint_def.localAnchorA = new b2Vec2(0, -SECONDARY_TOP_INTERVAL/2);
         
         joint_def.bodyB = secondary_lever;
         joint_def.localAnchorB = new b2Vec2(0, SECONDARY_LEVER/2 - THICKNESS/2);
@@ -130,7 +165,7 @@ function setup() {
         let joint_def = new b2RevoluteJointDef();
 
         joint_def.bodyA = platform;
-        joint_def.localAnchorA = new b2Vec2(0, -SECONDARY_TOP_INTERVAL/2);
+        joint_def.localAnchorA = new b2Vec2(0, SECONDARY_TOP_INTERVAL/2);
         
         joint_def.bodyB = secondary_rod;
         joint_def.localAnchorB = new b2Vec2(0, SECONDARY_ROD/2 - THICKNESS/2);
@@ -141,7 +176,7 @@ function setup() {
         let joint_def = new b2RevoluteJointDef();
 
         joint_def.bodyA = primary_lever;
-        joint_def.localAnchorA = new b2Vec2(0, PRIMARY_LEVER/2 - SECONDARY_BOTTOM_INTERVAL/2);
+        joint_def.localAnchorA = new b2Vec2(0, -PRIMARY_LEVER/2 + SECONDARY_BOTTOM_INTERVAL);
         
         joint_def.bodyB = secondary_rod;
         joint_def.localAnchorB = new b2Vec2(0, -SECONDARY_ROD/2 + THICKNESS/2);
@@ -149,11 +184,32 @@ function setup() {
         world.CreateJoint(joint_def);
     }
 
+    const bridge_size = (SECONDARY_BOTTOM_INTERVAL + SECONDARY_TOP_INTERVAL)/2;
+    let secondary_bridge = createBox(world, 0, 0, THICKNESS, bridge_size);
+    {
+        let joint_def = new b2RevoluteJointDef();
 
+        joint_def.bodyA = secondary_bridge;
+        joint_def.localAnchorA = new b2Vec2(0, -bridge_size/2 + THICKNESS);
+        
+        joint_def.bodyB = secondary_rod;
+        joint_def.localAnchorB = new b2Vec2(0, 0);
 
-    /*world.joint_ab.EnableMotor(true);
-    world.joint_ab.SetMotorSpeed(1);
-    world.joint_ab.SetMaxMotorTorque(100);*/
+        world.CreateJoint(joint_def);
+    }
+    {
+        let joint_def = new b2RevoluteJointDef();
+
+        joint_def.bodyA = secondary_bridge;
+        joint_def.localAnchorA = new b2Vec2(0, bridge_size/2 - THICKNESS);
+        
+        joint_def.bodyB = secondary_lever;
+        joint_def.localAnchorB = new b2Vec2(0, 0);
+
+        world.CreateJoint(joint_def);
+    }
+
+    world.platform = platform;
 
     return world;
 }

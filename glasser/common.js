@@ -16,8 +16,8 @@ const b2Shape = Box2D.Collision.Shapes.b2Shape;
 function createBox(world, x, y, width, height, options) {
      //default setting
     options = {
-        'density' : 1.0 ,
-        'friction' : 1.0 ,
+        'density' : 0.1,
+        'friction' : 5.0 ,
         'restitution' : 0.5 ,
         'type' : b2Body.b2_dynamicBody,
         ...options
